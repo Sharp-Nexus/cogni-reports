@@ -1,0 +1,161 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  sam-app
+
+Globals:
+  Api:
+    Cors:
+      AllowMethods: "'GET,POST,OPTIONS'"
+      AllowHeaders: "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'"
+      AllowOrigin: "'*'"
+
+Resources:
+  SimulationDataFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: simulation_data/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        SimulationDataApi:
+          Type: Api
+          Properties:
+            Path: /simulation-data
+            Method: get
+
+  TeamOverviewFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: team_overview/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        TeamOverviewApi:
+          Type: Api
+          Properties:
+            Path: /team-overview
+            Method: get
+        TeamAveragesApi:
+          Type: Api
+          Properties:
+            Path: /team-overview/averages
+            Method: get
+        TeamComparisonApi:
+          Type: Api
+          Properties:
+            Path: /team-overview/comparison
+            Method: get
+        TeamTrendApi:
+          Type: Api
+          Properties:
+            Path: /team-overview/trend
+            Method: get
+        TeamAdoptionApi:
+          Type: Api
+          Properties:
+            Path: /team-overview/adoption
+            Method: get
+        TeamSituationApi:
+          Type: Api
+          Properties:
+            Path: /team-overview/situation
+            Method: get
+
+  TeamMembersFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: team_members/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        TeamMembersApi:
+          Type: Api
+          Properties:
+            Path: /team-members
+            Method: get
+        TeamMemberDetailsApi:
+          Type: Api
+          Properties:
+            Path: /team-members/{memberId}
+            Method: get
+
+  IndustryBenchmarksFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: industry_benchmarks/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        IndustryBenchmarksApi:
+          Type: Api
+          Properties:
+            Path: /industry-benchmarks
+            Method: get
+        IndustryBenchmarksDetailApi:
+          Type: Api
+          Properties:
+            Path: /industry-benchmarks/detail
+            Method: get
+        IndustryBenchmarksAdoptionApi:
+          Type: Api
+          Properties:
+            Path: /industry-benchmarks/adoption
+            Method: get
+        IndustryBenchmarksSituationApi:
+          Type: Api
+          Properties:
+            Path: /industry-benchmarks/situation
+            Method: get
+
+  InsightsRecommendationsFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: insights_recommendations/
+      Handler: app.lambda_handler
+      Runtime: python3.13
+      Architectures:
+        - x86_64
+      Events:
+        InsightsRecommendationsApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations
+            Method: get
+        InsightsRecommendationsStrengthsApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations/strengths
+            Method: get
+        InsightsRecommendationsImprovementsApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations/improvements
+            Method: get
+        InsightsRecommendationsTrainingApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations/training
+            Method: get
+        InsightsRecommendationsDevelopmentApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations/development
+            Method: get
+        InsightsRecommendationsStrategiesApi:
+          Type: Api
+          Properties:
+            Path: /insights-recommendations/strategies
+            Method: get
+Outputs:
+  ApiUrl:
+    Description: "API Gateway endpoint URL"
+    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.amazonaws.com/Prod/"
