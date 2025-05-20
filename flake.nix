@@ -41,6 +41,8 @@
           git
           nix-direnv
           pythonEnv
+          python312Packages.python-lsp-server
+          zip
         ];
         shellHook = ''
           echo "python --version"

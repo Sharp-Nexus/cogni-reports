@@ -1,7 +1,6 @@
 import json
 
 def lambda_handler(event, context):
-    # Get query parameters
     query_params = event.get('queryStringParameters', {}) or {}
     product_filter = query_params.get('product')
     specialty_filter = query_params.get('specialty')
