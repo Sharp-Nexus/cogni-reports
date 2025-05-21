@@ -41,7 +41,7 @@
 
         buildPhase = ''
           mkdir -p lambda
-          ${pkgs.rsync}/bin/rsync -av --include='*/' --include='*.py' --exclude='test/' --exclude='*' ${self}/ lambda/
+          ${pkgs.rsync}/bin/rsync -av --include='*/' --include='*.py' --exclude='tests/' --exclude='*' ${self}/ lambda/
           mkdir -p $out/dist
           (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/cogni-reports-lambda.zip .)
         '';
