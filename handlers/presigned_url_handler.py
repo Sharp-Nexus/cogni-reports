@@ -14,7 +14,22 @@ def handle_presigned_url_request(event, context):
             ClientMethod='put_object',
             Params={
                 'Bucket': bucket_name,
-                'Key': filename
+                'Key': filename,
+                'Metadata': {
+                    'x-amz-meta-simulationId': event['queryStringParameters']['simulationId'],
+                    'x-amz-meta-productId': event['queryStringParameters']['productId'],
+                    'x-amz-meta-materialId': event['queryStringParameters']['materialId'],
+                    'x-amz-meta-userId': event['queryStringParameters']['userId'],
+                    'x-amz-meta-teamId': event['queryStringParameters']['teamId'],
+                    'x-amz-meta-language': event['queryStringParameters']['language'],
+                    'x-amz-meta-character': event['queryStringParameters']['character'],
+                    'x-amz-meta-specialty': event['queryStringParameters']['specialty'],
+                    'x-amz-meta-adoptionContinuum': event['queryStringParameters']['adoptionContinuum'],
+                    'x-amz-meta-temperament': event['queryStringParameters']['temperament'],
+                    'x-amz-meta-situation': event['queryStringParameters']['situation'],
+                    'x-amz-meta-agent': event['queryStringParameters']['agent'],
+                    'x-amz-meta-disc': event['queryStringParameters']['disc']
+                }
             },
             ExpiresIn=expiration
         )
