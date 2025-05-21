@@ -43,6 +43,7 @@
           pythonEnv
           python312Packages.python-lsp-server
           zip
+          unzip
         ];
         shellHook = ''
           echo "python --version"
