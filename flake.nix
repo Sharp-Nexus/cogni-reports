@@ -32,6 +32,22 @@
       pythonLambdaEnv = python.withPackages (ps: packages);
     };
 
+    packages = forEachSupportedSystem({pkgs}: {
+      default = pkgs.stdenv.mkDerivation {
+        name = "cogni-reports-lambda";
+        src = ./.;
+
+        buildInputs = with pkgs; [rsync zip];
+
+        buildPhase = ''
+          mkdir -p lambda
+          ${pkgs.rsync}/bin/rsync -av --include='*/' --include='*.py' --exclude='test/' --exclude='*' ${self}/ lambda/
+          mkdir -p $out/dist
+          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/cogni-reports-lambda.zip .)
+        '';
+      };
+    });
+
     devShells = forEachSupportedSystem ({pkgs}: {
       default = pkgs.mkShell {
         buildInputs = with pkgs; [
