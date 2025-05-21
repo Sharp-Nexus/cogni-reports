@@ -5,10 +5,8 @@ import os
 s3_client = boto3.client('s3')
 
 def handle_presigned_url_request(event, context):
-    print(f"presigned_url_request event: {json.dumps(event)}")
     try:
-        body = json.loads(event['body'])
-        filename = body['queryStringParameters']['filename']
+        filename = event['queryStringParameters']['filename']
         bucket_name = os.environ['BUCKET_NAME']
         expiration = 600 # URL valid for 10 mins
 
