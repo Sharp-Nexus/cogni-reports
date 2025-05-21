@@ -6,7 +6,7 @@ s3_client = boto3.client('s3')
 
 def handle_presigned_url_request(event, context):
     try:
-        filename = event['queryStringParameters']['filename']
+        key = event['queryStringParameters']['filename']
         bucket_name = os.environ['BUCKET_NAME']
         expiration = 600 # URL valid for 10 mins
 
@@ -14,7 +14,7 @@ def handle_presigned_url_request(event, context):
             ClientMethod='put_object',
             Params={
                 'Bucket': bucket_name,
-                'Key': filename,
+                'Key': key,
                 'Metadata': {
                     'x-amz-meta-simulationId': event['queryStringParameters']['simulationId'],
                     'x-amz-meta-productId': event['queryStringParameters']['productId'],
@@ -38,7 +38,7 @@ def handle_presigned_url_request(event, context):
             "statusCode": 200,
             "body": json.dumps({
                 "presignedUrl": presigned_url,
-                "accessUrl": "/callsim/" + filename,
+                "accessUrl": "/callsim/" + key,
             }),
             "headers": {
                 "Content-Type": "application/json",
