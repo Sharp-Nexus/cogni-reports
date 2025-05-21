@@ -1,28 +1,25 @@
 import json
+from handlers.benchmarks_handler import handle_benchmarks_request
+from handlers.presigned_url_handler import handle_presigned_url_request
+from handlers.recommendations_handler import handle_recommendations_request
 from handlers.simulation_handler import handle_simulation_request
 from handlers.team_members_handler import handle_team_members_request
-from handlers.benchmarks_handler import handle_benchmarks_request
 from handlers.team_overview_handler import handle_team_overview_request
-from handlers.recommendations_handler import handle_recommendations_request
 
 def lambda_handler(event, context):
-    # Get the path from the event
     path = event.get('path', '')
-    
-    # Debug logging
+
     print(f"Received request for path: {path}")
     print(f"Full event: {json.dumps(event)}")
-    
-    # Remove leading slash if present and handle callsim prefix
+
     path = path.lstrip('/')
     if path.startswith('callsim/'):
-        path = path[8:]  # Remove 'callsim/' prefix
-    
-    # Create a new event with the modified path
+        path = path[8:]
+
     modified_event = event.copy()
     modified_event['path'] = path
     
-    # Route the request based on the path
+    # Consider using switch statement
     if path.startswith('simulation-data'):
         return handle_simulation_request(modified_event, context)
     elif path.startswith('team-members'):
@@ -33,6 +30,8 @@ def lambda_handler(event, context):
         return handle_team_overview_request(modified_event, context)
     elif path.startswith('insights-recommendations'):
         return handle_recommendations_request(modified_event, context)
+    elif path.startswith('presignedPutUrl'):
+        return handle_presigned_url_request(modified_event, context)
     else:
         print(f"No route found for path: {path}")
         return {
