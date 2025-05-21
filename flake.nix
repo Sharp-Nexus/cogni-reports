@@ -26,6 +26,7 @@
 
       packages = with pythonPackages; [
         boto3
+        pg8000
       ];
     in {
       pythonEnv = python.withPackages (ps: developmentPackages ++ packages);
@@ -34,16 +35,28 @@
 
     packages = forEachSupportedSystem({pkgs}: {
       default = pkgs.stdenv.mkDerivation {
-        name = "cogni-reports-lambda";
+        name = "callsim-reports-lambda";
         src = ./.;
 
         buildInputs = with pkgs; [rsync zip];
 
         buildPhase = ''
           mkdir -p lambda
-          ${pkgs.rsync}/bin/rsync -av --include='*/' --include='*.py' --exclude='tests/' --exclude='*' ${self}/ lambda/
+          ${pkgs.rsync}/bin/rsync -av \
+            --include='*/' \
+            --include='*.py' \
+            --exclude='*/tests/' \
+            --exclude='*' \
+            ${self}/ lambda/
+
+          ${pkgs.rsync}/bin/rsync -av \
+            --filter='- **/__pycache__/' \
+            --filter='- **/*.pyc' \
+            ${pkgs.pythonLambdaEnv}/lib/python3.12/site-packages/ lambda/
+
           mkdir -p $out/dist
-          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/cogni-reports-lambda.zip .)
+          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/callsim-reports-lambda.zip . \
+            -x '**/__pycache__/*' '**/*.pyc')
         '';
       };
     });
@@ -60,6 +73,7 @@
           python312Packages.python-lsp-server
           zip
           unzip
+          rsync
         ];
         shellHook = ''
           echo "python --version"
