@@ -15,20 +15,20 @@ def handle_presigned_url_request(event, context):
             Params={
                 'Bucket': bucket_name,
                 'Key': key,
-                'Metadata': {
-                    'x-amz-meta-simulationId': event['queryStringParameters']['simulationId'],
-                    'x-amz-meta-productId': event['queryStringParameters']['productId'],
-                    'x-amz-meta-materialId': event['queryStringParameters']['materialId'],
-                    'x-amz-meta-userId': event['queryStringParameters']['userId'],
-                    'x-amz-meta-teamId': event['queryStringParameters']['teamId'],
-                    'x-amz-meta-language': event['queryStringParameters']['language'],
-                    'x-amz-meta-character': event['queryStringParameters']['character'],
-                    'x-amz-meta-specialty': event['queryStringParameters']['specialty'],
-                    'x-amz-meta-adoptionContinuum': event['queryStringParameters']['adoptionContinuum'],
-                    'x-amz-meta-temperament': event['queryStringParameters']['temperament'],
-                    'x-amz-meta-situation': event['queryStringParameters']['situation'],
-                    'x-amz-meta-agent': event['queryStringParameters']['agent'],
-                    'x-amz-meta-disc': event['queryStringParameters']['disc']
+                'Metadata':{
+                    'simulationId': event['queryStringParameters']['simulationId'],
+                    'productId': event['queryStringParameters']['productId'],
+                    'materialId': event['queryStringParameters']['materialId'],
+                    'userId': event['queryStringParameters']['userId'],
+                    'teamId': event['queryStringParameters']['teamId'],
+                    'language': event['queryStringParameters']['language'],
+                    'character': event['queryStringParameters']['character'],
+                    'specialty': event['queryStringParameters']['specialty'],
+                    'adoptionContinuum': event['queryStringParameters']['adoptionContinuum'],
+                    'temperament': event['queryStringParameters']['temperament'],
+                    'situation': event['queryStringParameters']['situation'],
+                    'agent': event['queryStringParameters']['agent'],
+                    'disc': event['queryStringParameters']['disc']
                 }
             },
             ExpiresIn=expiration
