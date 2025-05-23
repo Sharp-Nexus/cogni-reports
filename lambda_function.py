@@ -5,6 +5,7 @@ from handlers.recommendations_handler import handle_recommendations_request
 from handlers.simulation_handler import handle_simulation_request
 from handlers.team_members_handler import handle_team_members_request
 from handlers.team_overview_handler import handle_team_overview_request
+from handlers.sample_data_handler import handle_sample_data_request
 
 def lambda_handler(event, context):
     path = event.get('path', '')
@@ -32,6 +33,8 @@ def lambda_handler(event, context):
         return handle_recommendations_request(modified_event, context)
     elif path.startswith('presignedPutUrl'):
         return handle_presigned_url_request(modified_event, context)
+    elif path.startswith('call-sim-sample-data'):
+        return handle_sample_data_request(modified_event, context)
     else:
         print(f"No route found for path: {path}")
         return {
