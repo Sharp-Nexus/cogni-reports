@@ -21,6 +21,7 @@
 
       developmentPackages = with pythonPackages; [
         pip
+        ruff
         virtualenv
       ];
 
@@ -55,7 +56,7 @@
             ${pkgs.pythonLambdaEnv}/lib/python3.12/site-packages/ lambda/
 
           mkdir -p $out/dist
-          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/callsim-reports-lambda.zip . \
+          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/lambda.zip . \
             -x '**/__pycache__/*' '**/*.pyc')
         '';
       };

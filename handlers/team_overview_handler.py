@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from .db_connection import get_db_connection
 
 def calculate_team_averages(cursor, product_id=None, team_id=None):
@@ -641,7 +640,7 @@ def handle_team_overview_request(event, context):
                 })
             }
             
-    except Exception as e:
+    except Exception:
         return {
             "statusCode": 500,
             "headers": {
