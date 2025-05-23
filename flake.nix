@@ -21,6 +21,7 @@
 
       developmentPackages = with pythonPackages; [
         pip
+        ruff
         virtualenv
       ];
 

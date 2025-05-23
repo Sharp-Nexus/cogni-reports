@@ -1,8 +1,6 @@
 import json
 
 def handle_team_members_request(event, context):
-    # Get query parameters and path
-    query_params = event.get('queryStringParameters', {}) or {}
     path = event.get('path', '')
     
     # Remove leading slash if present
