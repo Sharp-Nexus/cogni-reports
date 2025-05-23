@@ -35,7 +35,7 @@
     };
 
     packages = forEachSupportedSystem({pkgs}: {
-      default = pkgs.stdenv.mkDerivation {
+      default = pkgs.stdenvNoCC.mkDerivation {
         name = "callsim-reports-lambda";
         src = ./.;
 
@@ -43,20 +43,17 @@
 
         buildPhase = ''
           mkdir -p lambda
-          ${pkgs.rsync}/bin/rsync -av \
+          rsync -av \
             --include='*/' \
             --include='*.py' \
             --exclude='*/tests/' \
             --exclude='*' \
             ${self}/ lambda/
 
-          ${pkgs.rsync}/bin/rsync -av \
-            --filter='- **/__pycache__/' \
-            --filter='- **/*.pyc' \
-            ${pkgs.pythonLambdaEnv}/lib/python3.12/site-packages/ lambda/
+          rsync -av ${pkgs.pythonLambdaEnv}/lib/python3.12/site-packages/ lambda/
 
           mkdir -p $out/dist
-          (cd lambda && ${pkgs.zip}/bin/zip -r $out/dist/lambda.zip . \
+          (cd lambda && zip -r $out/dist/lambda.zip . \
             -x '**/__pycache__/*' '**/*.pyc')
         '';
       };
