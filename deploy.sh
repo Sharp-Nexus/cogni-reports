@@ -1,8 +1,9 @@
-#!/usr/bin/env bash
+#!/usr/bin/env nix-shell
+#!nix-shell -i bash -p awscli2 nix-output-monitor
 set -e
 
 echo "Building project with nix..."
-nix build
+nom build
 
 echo "Deploying to AWS Lambda..."
 aws lambda update-function-code \
