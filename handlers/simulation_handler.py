@@ -8,20 +8,19 @@ def datetime_handler(obj):
     raise TypeError(f"Object of type {type(obj)} is not JSON serializable")
 
 def transform_simulation_data(row):
-    # Extract data from the conversation_data
-    conversation_data = row.get('conversation_data', {})
-    analysis = conversation_data.get('analysis', {})
-    evaluation_results = analysis.get('evaluation_criteria_results', {})
+    # Get scores from the accuracy column
+    accuracy = row.get('accuracy', {})
+    scores = accuracy.get('scores', {})
     
-    # Get scores from evaluation results
-    introduction_score = evaluation_results.get('introduction', {}).get('result', 'failure')
-    rapport_score = evaluation_results.get('rapport', {}).get('result', 'failure')
-    interest_score = evaluation_results.get('creating_interest', {}).get('result', 'failure')
-    probing_score = evaluation_results.get('probing', {}).get('result', 'failure')
-    product_knowledge_score = evaluation_results.get('product_knowledge', {}).get('result', 'failure')
+    # Get individual scores
+    introduction_score = scores.get('introduction', {}).get('score', 0)
+    rapport_score = scores.get('rapport', {}).get('score', 0)
+    interest_score = scores.get('creatingInterest', {}).get('score', 0)
+    probing_score = scores.get('probing', {}).get('score', 0)
+    product_knowledge_score = scores.get('productKnowledge', {}).get('score', 0)
     
-    # Convert scores to numeric values
-    score_map = {'success': 100, 'failure': 0}
+    # Get overall score from scores.total.score
+    overall_score = scores.get('total', {}).get('score', 0)
     
     # Handle date formatting
     created_at = row.get('created_at')
@@ -38,13 +37,12 @@ def transform_simulation_data(row):
         "situation": row.get('situation', '').capitalize(),
         "product": row.get('product_id', ''),  # Using product_id since product name isn't available
         "specialty": row.get('specialty', '').capitalize(),
-        "overallScore": row.get('overall_score', 0),
-        "fluency": row.get('fluency', {}).get('scores', {}).get('total', 0),
-        "introduction": score_map.get(introduction_score, 0),
-        "rapport": score_map.get(rapport_score, 0),
-        "interest": score_map.get(interest_score, 0),
-        "probing": score_map.get(probing_score, 0),
-        "productKnowledge": score_map.get(product_knowledge_score, 0)
+        "overallScore": overall_score,
+        "introduction": introduction_score,
+        "rapport": rapport_score,
+        "interest": interest_score,
+        "probing": probing_score,
+        "productKnowledge": product_knowledge_score
     }
 
 def handle_simulation_request(event, context):
