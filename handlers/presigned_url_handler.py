@@ -28,7 +28,8 @@ def handle_presigned_url_request(event, context):
                     'temperament': event['queryStringParameters']['temperament'],
                     'situation': event['queryStringParameters']['situation'],
                     'agent': event['queryStringParameters']['agent'],
-                    'disc': event['queryStringParameters']['disc']
+                    'disc': event['queryStringParameters']['disc'],
+                    'mode': event['queryStringParameters']['mode']
                 }
             },
             ExpiresIn=expiration
