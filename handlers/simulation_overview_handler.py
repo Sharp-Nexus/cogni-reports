@@ -129,7 +129,6 @@ def handle_simulation_overview(event, context):
         return handle_simulation_disc(event, context)
     elif path.endswith('/fluency'):
         return handle_simulation_fluency(event, context)
-    # Add more sub-endpoints here later (e.g., /situation)
     
     # Default overview endpoint handling
     query_params = event.get('queryStringParameters', {}) or {}
