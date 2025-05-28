@@ -183,19 +183,7 @@ def handle_simulation_run(event, context):
             transformed_data = transform_simulation_run_data(row_dict)
             results.append(transformed_data)
         
-        if not results:
-            return {
-                "statusCode": 404,
-                "headers": {
-                    "Access-Control-Allow-Origin": "*",
-                    "Access-Control-Allow-Headers": "*",
-                    "Access-Control-Allow-Methods": "*"
-                },
-                "body": json.dumps({
-                    "error": "No simulations found"
-                })
-            }
-            
+        # Return empty array if no results found, instead of 404 error
         return {
             "statusCode": 200,
             "headers": {
@@ -204,7 +192,7 @@ def handle_simulation_run(event, context):
                 "Access-Control-Allow-Methods": "*"
             },
             "body": json.dumps({
-                "simulationData": results if not simulation_id else results[0]
+                "simulationData": results if not simulation_id else results[0] if results else []
             }, default=datetime_handler)
         }
         
