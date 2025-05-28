@@ -3,14 +3,18 @@ import json
 from handlers.benchmarks_handler import handle_benchmarks_request
 from handlers.presigned_url_handler import handle_presigned_url_request
 from handlers.recommendations_handler import handle_recommendations_request
-from handlers.simulation_handler import handle_simulation_request
+from handlers.simulation_overview_handler import handle_simulation_overview, handle_simulation_adoption
+from handlers.simulation_runs_handler import handle_simulation_run
+from handlers.simulation_insights_handler import handle_simulation_insights
 from handlers.team_members_handler import handle_team_members_request
 from handlers.team_overview_handler import handle_team_overview_request
 from handlers.sample_data_handler import handle_sample_data_request
 from utils.logger import logger
 
 ROUTE_HANDLERS = {
-    'simulation-data': handle_simulation_request,
+    'simulation-insights': handle_simulation_insights,
+    'simulation-run': handle_simulation_run,
+    'simulation-overview': handle_simulation_overview,
     'team-members': handle_team_members_request,
     'industry-benchmarks': handle_benchmarks_request,
     'team-overview': handle_team_overview_request,
@@ -50,4 +54,4 @@ def lambda_handler(event, context):
             "path": path,
             "method": http_method
         })
-    }
+    } 
