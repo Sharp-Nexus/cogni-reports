@@ -16,17 +16,20 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
     products_query = """
         SELECT DISTINCT product_id 
         FROM call_sim_scoring 
-        WHERE team_id::text = %s 
-        AND product_id IS NOT NULL
-        {mode_filter}
+        WHERE 1=1
     """
-    params = [team_id]
-    mode_filter = ""
+    params = []
+    
+    if team_id and team_id != 'all':
+        products_query += " AND team_id::text = %s"
+        params.append(team_id)
+    
     if mode and mode != 'all':
-        mode_filter = "AND mode = %s"
+        products_query += " AND mode = %s"
         params.append(mode)
     
-    products_query = products_query.format(mode_filter=mode_filter)
+    products_query += " AND product_id IS NOT NULL"
+    
     logger.info(f"Executing products query: {products_query}")
     logger.info(f"Products query parameters: {params}")
     
@@ -65,7 +68,7 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
     """
     params = []
 
-    # Add filters
+    # Add filters only if they are provided and not 'all'
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
         params.append(product_id)
@@ -123,7 +126,14 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
             FROM call_sim_scoring
             WHERE accuracy IS NOT NULL
-            AND mode = %s
+    """
+    
+    params = []
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
+    query += """
         ),
         benchmarks AS (
             SELECT 
@@ -152,13 +162,20 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
                 CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
             FROM call_sim_scoring
-            WHERE team_id::text = %s
-            AND mode = %s
+            WHERE accuracy IS NOT NULL
     """
     
-    # Add product filter if specified
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
+        params.append(product_id)
     
     query += """
         )
@@ -242,11 +259,6 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
         WHERE adoption_score IS NOT NULL
     """
 
-    # Build parameters list
-    params = [mode, team_id, mode]  # mode for all_scores, team_id for team_scores, mode for team_scores
-    if product_id and product_id != 'all':
-        params.append(product_id)
-    
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
 
@@ -305,7 +317,14 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
             FROM call_sim_scoring
             WHERE accuracy IS NOT NULL
             AND situation IS NOT NULL
-            AND mode = %s
+    """
+    
+    params = []
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
+    query += """
         ),
         benchmarks AS (
             SELECT 
@@ -339,16 +358,23 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
                 CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
             FROM call_sim_scoring
-            WHERE team_id::text = %s
-            AND mode = %s
+            WHERE accuracy IS NOT NULL
+            AND situation IS NOT NULL
     """
     
-    # Add product filter if specified
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
+        params.append(product_id)
     
     query += """
-            AND situation IS NOT NULL
         )
         SELECT 
             t.situation as name,
@@ -360,11 +386,6 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
         GROUP BY t.situation, b.overall_benchmark
         ORDER BY t.situation
     """
-    
-    # Build parameters list
-    params = [mode, team_id, mode]  # mode for all_scores, team_id for team_scores, mode for team_scores
-    if product_id and product_id != 'all':
-        params.append(product_id)
     
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -418,7 +439,14 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
             FROM call_sim_scoring
             WHERE accuracy IS NOT NULL
             AND created_at >= NOW() - INTERVAL '12 months'
-            AND mode = %s
+    """
+    
+    params = []
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
+    query += """
         ),
         benchmarks AS (
             SELECT 
@@ -452,16 +480,23 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
                 CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
             FROM call_sim_scoring
-            WHERE team_id::text = %s
-            AND mode = %s
+            WHERE accuracy IS NOT NULL
+            AND created_at >= NOW() - INTERVAL '12 months'
     """
     
-    # Add product filter if specified
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
+        params.append(product_id)
     
     query += """
-            AND created_at >= NOW() - INTERVAL '12 months'
         )
         SELECT 
             TO_CHAR(t.month, 'Mon YYYY') as name,
@@ -473,11 +508,6 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
         GROUP BY t.month, b.overall_benchmark
         ORDER BY t.month
     """
-    
-    # Build parameters list
-    params = [mode, team_id, mode]  # mode for all_scores, team_id for team_scores, mode for team_scores
-    if product_id and product_id != 'all':
-        params.append(product_id)
     
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -531,7 +561,14 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
             FROM call_sim_scoring
             WHERE accuracy IS NOT NULL
             AND adoption_continuum IS NOT NULL
-            AND mode = %s
+    """
+    
+    params = []
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
+    query += """
         ),
         benchmarks AS (
             SELECT 
@@ -565,16 +602,23 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
                 CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
             FROM call_sim_scoring
-            WHERE team_id::text = %s
-            AND mode = %s
+            WHERE accuracy IS NOT NULL
+            AND adoption_continuum IS NOT NULL
     """
     
-    # Add product filter if specified
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
+    if mode and mode != 'all':
+        query += " AND mode = %s"
+        params.append(mode)
+    
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
+        params.append(product_id)
     
     query += """
-            AND adoption_continuum IS NOT NULL
         )
         SELECT 
             INITCAP(t.adoption_continuum) as name,
@@ -594,11 +638,6 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
                 ELSE 6
             END
     """
-    
-    # Build parameters list
-    params = [mode, team_id, mode]  # mode for all_scores, team_id for team_scores, mode for team_scores
-    if product_id and product_id != 'all':
-        params.append(product_id)
     
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -634,25 +673,28 @@ def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
     """
     logger.info(f"Calculating team accuracy with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
     
-    # Build the mode filter condition
-    mode_condition = ""
-    if mode and mode != 'all':
-        mode_condition = "AND mode = %s"
-    
-    query = f"""
+    # Base query
+    query = """
         SELECT 
             AVG(CAST(accuracy->'scores'->'total'->>'score' AS FLOAT)) as total_accuracy
         FROM call_sim_scoring
-        WHERE team_id::text = %s
-        {f"AND product_id = %s" if product_id and product_id != 'all' else ""}
-        {mode_condition}
+        WHERE 1=1
     """
     
     # Build parameters list
-    params = [team_id]
+    params = []
+    
+    # Add filters only if they are provided and not 'all'
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
     if product_id and product_id != 'all':
+        query += " AND product_id = %s"
         params.append(product_id)
+    
     if mode and mode != 'all':
+        query += " AND mode = %s"
         params.append(mode)
 
     logger.info(f"Executing query: {query}")
@@ -680,29 +722,31 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
     """
     logger.info(f"Calculating team fluency with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
     
-    # Build the mode filter condition
-    mode_condition = ""
-    if mode and mode != 'all':
-        mode_condition = "AND mode = %s"
-    
-    query = f"""
+    # Base query
+    query = """
         SELECT 
             AVG(CAST(fluency->'scores'->'wpm' AS FLOAT)) as wpm,
             AVG(CAST(fluency->'scores'->'total' AS FLOAT)) as total,
             AVG(CAST(fluency->'scores'->'pauses' AS FLOAT)) as pauses,
             AVG(CAST(fluency->'scores'->'fillerWords' AS FLOAT)) as filler_words
         FROM call_sim_scoring
-        WHERE team_id::text = %s
-        {f"AND product_id = %s" if product_id and product_id != 'all' else ""}
-        {mode_condition}
-        AND fluency IS NOT NULL
+        WHERE fluency IS NOT NULL
     """
     
     # Build parameters list
-    params = [team_id]
+    params = []
+    
+    # Add filters only if they are provided and not 'all'
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
     if product_id and product_id != 'all':
+        query += " AND product_id = %s"
         params.append(product_id)
+    
     if mode and mode != 'all':
+        query += " AND mode = %s"
         params.append(mode)
 
     logger.info(f"Executing query: {query}")
@@ -733,24 +777,27 @@ def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=
     """
     logger.info(f"Calculating team simulation count with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
     
-    # Build the mode filter condition
-    mode_condition = ""
-    if mode and mode != 'all':
-        mode_condition = "AND mode = %s"
-    
-    query = f"""
+    # Base query
+    query = """
         SELECT COUNT(*) as total_simulations
         FROM call_sim_scoring
-        WHERE team_id::text = %s
-        {f"AND product_id = %s" if product_id and product_id != 'all' else ""}
-        {mode_condition}
+        WHERE 1=1
     """
     
     # Build parameters list
-    params = [team_id]
+    params = []
+    
+    # Add filters only if they are provided and not 'all'
+    if team_id and team_id != 'all':
+        query += " AND team_id::text = %s"
+        params.append(team_id)
+    
     if product_id and product_id != 'all':
+        query += " AND product_id = %s"
         params.append(product_id)
+    
     if mode and mode != 'all':
+        query += " AND mode = %s"
         params.append(mode)
 
     logger.info(f"Executing query: {query}")
