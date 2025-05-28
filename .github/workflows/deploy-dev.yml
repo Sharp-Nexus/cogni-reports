@@ -23,7 +23,9 @@ jobs:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
         run: |
-          nix develop --command aws lambda update-function-code \
-            --function-name "${{ env.AWS_LAMBDA_ARN }}" \
-            --region ${{ env.AWS_REGION }} \
-            --zip-file fileb://result/dist/lambda.zip
+          nix develop --command bash -c "
+            aws lambda update-function-code \
+              --function-name '${{ env.AWS_LAMBDA_ARN }}' \
+              --region '${{ env.AWS_REGION }}' \
+              --zip-file fileb://result/dist/lambda.zip
+          "
