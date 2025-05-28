@@ -2,7 +2,9 @@ import json
 from handlers.benchmarks_handler import handle_benchmarks_request
 from handlers.presigned_url_handler import handle_presigned_url_request
 from handlers.recommendations_handler import handle_recommendations_request
-from handlers.simulation_handler import handle_simulation_request
+from handlers.simulation_overview_handler import handle_simulation_overview, handle_simulation_adoption
+from handlers.simulation_runs_handler import handle_simulation_run
+from handlers.simulation_insights_handler import handle_simulation_insights
 from handlers.team_members_handler import handle_team_members_request
 from handlers.team_overview_handler import handle_team_overview_request
 from handlers.sample_data_handler import handle_sample_data_request
@@ -21,8 +23,12 @@ def lambda_handler(event, context):
     modified_event['path'] = path
     
     # Consider using switch statement
-    if path.startswith('simulation-data'):
-        return handle_simulation_request(modified_event, context)
+    if path.startswith('simulation-insights'):
+        return handle_simulation_insights(modified_event, context)
+    elif path.startswith('simulation-run'):
+        return handle_simulation_run(modified_event, context)
+    elif path.startswith('simulation-overview'):
+        return handle_simulation_overview(modified_event, context)
     elif path.startswith('team-members'):
         return handle_team_members_request(modified_event, context)
     elif path.startswith('industry-benchmarks'):
