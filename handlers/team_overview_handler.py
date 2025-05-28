@@ -112,7 +112,7 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
-        WITH all_scores AS (
+        WITH team_scores AS (
             SELECT 
                 CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
                 CAST(accuracy->'scores'->'rapport'->>'score' AS FLOAT) as rapport_score,
@@ -129,42 +129,6 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
     """
     
     params = []
-    if mode and mode != 'all':
-        query += " AND mode = %s"
-        params.append(mode)
-    
-    query += """
-        ),
-        benchmarks AS (
-            SELECT 
-                AVG(intro_score) as intro_benchmark,
-                AVG(rapport_score) as rapport_benchmark,
-                AVG(interest_score) as interest_benchmark,
-                AVG(probing_score) as probing_benchmark,
-                AVG(product_score) as product_benchmark,
-                AVG(strategy_score) as strategy_benchmark,
-                AVG(closing_score) as closing_benchmark,
-                AVG(disc_score) as disc_benchmark,
-                AVG(traits_score) as traits_benchmark,
-                AVG(adoption_score) as adoption_benchmark
-            FROM all_scores
-        ),
-        team_scores AS (
-            SELECT 
-                CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
-                CAST(accuracy->'scores'->'rapport'->>'score' AS FLOAT) as rapport_score,
-                CAST(accuracy->'scores'->'creatingInterest'->>'score' AS FLOAT) as interest_score,
-                CAST(accuracy->'scores'->'probing'->>'score' AS FLOAT) as probing_score,
-                CAST(accuracy->'scores'->'productKnowledge'->>'score' AS FLOAT) as product_score,
-                CAST(accuracy->'scores'->'strategy'->>'score' AS FLOAT) as strategy_score,
-                CAST(accuracy->'scores'->'closing'->>'score' AS FLOAT) as closing_score,
-                CAST(accuracy->'scores'->'disc'->>'score' AS FLOAT) as disc_score,
-                CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
-                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
-            FROM call_sim_scoring
-            WHERE accuracy IS NOT NULL
-    """
-    
     if team_id and team_id != 'all':
         query += " AND team_id::text = %s"
         params.append(team_id)
@@ -181,80 +145,70 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
         )
         SELECT 
             'Introduction' as name,
-            AVG(intro_score) as team,
-            (SELECT intro_benchmark FROM benchmarks) as average
+            AVG(intro_score) as team
         FROM team_scores
         WHERE intro_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Rapport' as name,
-            AVG(rapport_score) as team,
-            (SELECT rapport_benchmark FROM benchmarks) as average
+            AVG(rapport_score) as team
         FROM team_scores
         WHERE rapport_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Creating Interest' as name,
-            AVG(interest_score) as team,
-            (SELECT interest_benchmark FROM benchmarks) as average
+            AVG(interest_score) as team
         FROM team_scores
         WHERE interest_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Probing' as name,
-            AVG(probing_score) as team,
-            (SELECT probing_benchmark FROM benchmarks) as average
+            AVG(probing_score) as team
         FROM team_scores
         WHERE probing_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Product Knowledge' as name,
-            AVG(product_score) as team,
-            (SELECT product_benchmark FROM benchmarks) as average
+            AVG(product_score) as team
         FROM team_scores
         WHERE product_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Strategy' as name,
-            AVG(strategy_score) as team,
-            (SELECT strategy_benchmark FROM benchmarks) as average
+            AVG(strategy_score) as team
         FROM team_scores
         WHERE strategy_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Closing' as name,
-            AVG(closing_score) as team,
-            (SELECT closing_benchmark FROM benchmarks) as average
+            AVG(closing_score) as team
         FROM team_scores
         WHERE closing_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'DISC' as name,
-            AVG(disc_score) as team,
-            (SELECT disc_benchmark FROM benchmarks) as average
+            AVG(disc_score) as team
         FROM team_scores
         WHERE disc_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Traits' as name,
-            AVG(traits_score) as team,
-            (SELECT traits_benchmark FROM benchmarks) as average
+            AVG(traits_score) as team
         FROM team_scores
         WHERE traits_score IS NOT NULL
 
         UNION ALL
         SELECT 
             'Adoption Continuum' as name,
-            AVG(adoption_score) as team,
-            (SELECT adoption_benchmark FROM benchmarks) as average
+            AVG(adoption_score) as team
         FROM team_scores
         WHERE adoption_score IS NOT NULL
     """
@@ -267,25 +221,14 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
     results = cursor.fetchall()
     logger.info(f"Query results: {results}")
 
-    if not results or len(results) == 0:
-        logger.info("No data found for the specified filters")
-        return None
-
     # Format results for frontend, converting Decimal to float
     comparison_data = [
         {
             "name": row[0],
-            "team": float(round(row[1] or 0, 1)),
-            "average": float(row[2])
+            "team": float(round(row[1] or 0, 1))
         }
         for row in results
     ]
-
-    # Check if we have any actual team scores (not just benchmarks)
-    has_team_scores = any(data["team"] > 0 for data in comparison_data)
-    if not has_team_scores:
-        logger.info("No team scores found in the data")
-        return None
 
     response_data = {
         "teamComparisonData": comparison_data
@@ -301,7 +244,7 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
-        WITH all_scores AS (
+        WITH team_scores AS (
             SELECT 
                 situation,
                 CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
@@ -320,48 +263,6 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     """
     
     params = []
-    if mode and mode != 'all':
-        query += " AND mode = %s"
-        params.append(mode)
-    
-    query += """
-        ),
-        benchmarks AS (
-            SELECT 
-                situation,
-                AVG(intro_score) as intro_benchmark,
-                AVG(rapport_score) as rapport_benchmark,
-                AVG(interest_score) as interest_benchmark,
-                AVG(probing_score) as probing_benchmark,
-                AVG(product_score) as product_benchmark,
-                AVG(strategy_score) as strategy_benchmark,
-                AVG(closing_score) as closing_benchmark,
-                AVG(disc_score) as disc_benchmark,
-                AVG(traits_score) as traits_benchmark,
-                AVG(adoption_score) as adoption_benchmark,
-                AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
-                     strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as overall_benchmark
-            FROM all_scores
-            GROUP BY situation
-        ),
-        team_scores AS (
-            SELECT 
-                situation,
-                CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
-                CAST(accuracy->'scores'->'rapport'->>'score' AS FLOAT) as rapport_score,
-                CAST(accuracy->'scores'->'creatingInterest'->>'score' AS FLOAT) as interest_score,
-                CAST(accuracy->'scores'->'probing'->>'score' AS FLOAT) as probing_score,
-                CAST(accuracy->'scores'->'productKnowledge'->>'score' AS FLOAT) as product_score,
-                CAST(accuracy->'scores'->'strategy'->>'score' AS FLOAT) as strategy_score,
-                CAST(accuracy->'scores'->'closing'->>'score' AS FLOAT) as closing_score,
-                CAST(accuracy->'scores'->'disc'->>'score' AS FLOAT) as disc_score,
-                CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
-                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
-            FROM call_sim_scoring
-            WHERE accuracy IS NOT NULL
-            AND situation IS NOT NULL
-    """
-    
     if team_id and team_id != 'all':
         query += " AND team_id::text = %s"
         params.append(team_id)
@@ -377,14 +278,12 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     query += """
         )
         SELECT 
-            t.situation as name,
-            AVG((t.intro_score + t.rapport_score + t.interest_score + t.probing_score + t.product_score + 
-                 t.strategy_score + t.closing_score + t.disc_score + t.traits_score + t.adoption_score) / 10) as team,
-            b.overall_benchmark as industry
-        FROM team_scores t
-        JOIN benchmarks b ON t.situation = b.situation
-        GROUP BY t.situation, b.overall_benchmark
-        ORDER BY t.situation
+            situation as name,
+            AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
+                 strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as team
+        FROM team_scores
+        GROUP BY situation
+        ORDER BY situation
     """
     
     logger.info(f"Executing query: {query}")
@@ -395,16 +294,11 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     results = cursor.fetchall()
     logger.info(f"Query results: {results}")
 
-    if not results:
-        logger.info("No data found for the specified filters")
-        return None
-
     # Format results for frontend, converting Decimal to float
     situation_data = [
         {
             "name": row[0],
-            "team": float(round(row[1] or 0, 1)),
-            "industry": float(round(row[2] or 0, 1))
+            "team": float(round(row[1] or 0, 1))
         }
         for row in results
     ]
@@ -423,7 +317,7 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
-        WITH all_scores AS (
+        WITH team_scores AS (
             SELECT 
                 DATE_TRUNC('month', created_at) as month,
                 CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
@@ -442,48 +336,6 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     """
     
     params = []
-    if mode and mode != 'all':
-        query += " AND mode = %s"
-        params.append(mode)
-    
-    query += """
-        ),
-        benchmarks AS (
-            SELECT 
-                month,
-                AVG(intro_score) as intro_benchmark,
-                AVG(rapport_score) as rapport_benchmark,
-                AVG(interest_score) as interest_benchmark,
-                AVG(probing_score) as probing_benchmark,
-                AVG(product_score) as product_benchmark,
-                AVG(strategy_score) as strategy_benchmark,
-                AVG(closing_score) as closing_benchmark,
-                AVG(disc_score) as disc_benchmark,
-                AVG(traits_score) as traits_benchmark,
-                AVG(adoption_score) as adoption_benchmark,
-                AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
-                     strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as overall_benchmark
-            FROM all_scores
-            GROUP BY month
-        ),
-        team_scores AS (
-            SELECT 
-                DATE_TRUNC('month', created_at) as month,
-                CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
-                CAST(accuracy->'scores'->'rapport'->>'score' AS FLOAT) as rapport_score,
-                CAST(accuracy->'scores'->'creatingInterest'->>'score' AS FLOAT) as interest_score,
-                CAST(accuracy->'scores'->'probing'->>'score' AS FLOAT) as probing_score,
-                CAST(accuracy->'scores'->'productKnowledge'->>'score' AS FLOAT) as product_score,
-                CAST(accuracy->'scores'->'strategy'->>'score' AS FLOAT) as strategy_score,
-                CAST(accuracy->'scores'->'closing'->>'score' AS FLOAT) as closing_score,
-                CAST(accuracy->'scores'->'disc'->>'score' AS FLOAT) as disc_score,
-                CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
-                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
-            FROM call_sim_scoring
-            WHERE accuracy IS NOT NULL
-            AND created_at >= NOW() - INTERVAL '12 months'
-    """
-    
     if team_id and team_id != 'all':
         query += " AND team_id::text = %s"
         params.append(team_id)
@@ -499,14 +351,12 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     query += """
         )
         SELECT 
-            TO_CHAR(t.month, 'Mon YYYY') as name,
-            AVG((t.intro_score + t.rapport_score + t.interest_score + t.probing_score + t.product_score + 
-                 t.strategy_score + t.closing_score + t.disc_score + t.traits_score + t.adoption_score) / 10) as team,
-            b.overall_benchmark as industry
-        FROM team_scores t
-        JOIN benchmarks b ON t.month = b.month
-        GROUP BY t.month, b.overall_benchmark
-        ORDER BY t.month
+            TO_CHAR(month, 'Mon YYYY') as name,
+            AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
+                 strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as team
+        FROM team_scores
+        GROUP BY month
+        ORDER BY month
     """
     
     logger.info(f"Executing query: {query}")
@@ -517,16 +367,11 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     results = cursor.fetchall()
     logger.info(f"Query results: {results}")
 
-    if not results:
-        logger.info("No data found for the specified filters")
-        return None
-
     # Format results for frontend, converting Decimal to float
     trend_data = [
         {
             "name": row[0],
-            "team": float(round(row[1] or 0, 1)),
-            "industry": float(round(row[2] or 0, 1))
+            "team": float(round(row[1] or 0, 1))
         }
         for row in results
     ]
@@ -545,7 +390,7 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
-        WITH all_scores AS (
+        WITH team_scores AS (
             SELECT 
                 adoption_continuum,
                 CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
@@ -564,48 +409,6 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     """
     
     params = []
-    if mode and mode != 'all':
-        query += " AND mode = %s"
-        params.append(mode)
-    
-    query += """
-        ),
-        benchmarks AS (
-            SELECT 
-                adoption_continuum,
-                AVG(intro_score) as intro_benchmark,
-                AVG(rapport_score) as rapport_benchmark,
-                AVG(interest_score) as interest_benchmark,
-                AVG(probing_score) as probing_benchmark,
-                AVG(product_score) as product_benchmark,
-                AVG(strategy_score) as strategy_benchmark,
-                AVG(closing_score) as closing_benchmark,
-                AVG(disc_score) as disc_benchmark,
-                AVG(traits_score) as traits_benchmark,
-                AVG(adoption_score) as adoption_benchmark,
-                AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
-                     strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as overall_benchmark
-            FROM all_scores
-            GROUP BY adoption_continuum
-        ),
-        team_scores AS (
-            SELECT 
-                adoption_continuum,
-                CAST(accuracy->'scores'->'introduction'->>'score' AS FLOAT) as intro_score,
-                CAST(accuracy->'scores'->'rapport'->>'score' AS FLOAT) as rapport_score,
-                CAST(accuracy->'scores'->'creatingInterest'->>'score' AS FLOAT) as interest_score,
-                CAST(accuracy->'scores'->'probing'->>'score' AS FLOAT) as probing_score,
-                CAST(accuracy->'scores'->'productKnowledge'->>'score' AS FLOAT) as product_score,
-                CAST(accuracy->'scores'->'strategy'->>'score' AS FLOAT) as strategy_score,
-                CAST(accuracy->'scores'->'closing'->>'score' AS FLOAT) as closing_score,
-                CAST(accuracy->'scores'->'disc'->>'score' AS FLOAT) as disc_score,
-                CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
-                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
-            FROM call_sim_scoring
-            WHERE accuracy IS NOT NULL
-            AND adoption_continuum IS NOT NULL
-    """
-    
     if team_id and team_id != 'all':
         query += " AND team_id::text = %s"
         params.append(team_id)
@@ -621,15 +424,13 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     query += """
         )
         SELECT 
-            INITCAP(t.adoption_continuum) as name,
-            AVG((t.intro_score + t.rapport_score + t.interest_score + t.probing_score + t.product_score + 
-                 t.strategy_score + t.closing_score + t.disc_score + t.traits_score + t.adoption_score) / 10) as team,
-            b.overall_benchmark as industry
-        FROM team_scores t
-        JOIN benchmarks b ON t.adoption_continuum = b.adoption_continuum
-        GROUP BY t.adoption_continuum, b.overall_benchmark
+            INITCAP(adoption_continuum) as name,
+            AVG((intro_score + rapport_score + interest_score + probing_score + product_score + 
+                 strategy_score + closing_score + disc_score + traits_score + adoption_score) / 10) as team
+        FROM team_scores
+        GROUP BY adoption_continuum
         ORDER BY 
-            CASE t.adoption_continuum
+            CASE adoption_continuum
                 WHEN 'naive' THEN 1
                 WHEN 'aware' THEN 2
                 WHEN 'trialing' THEN 3
@@ -647,16 +448,11 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     results = cursor.fetchall()
     logger.info(f"Query results: {results}")
 
-    if not results:
-        logger.info("No data found for the specified filters")
-        return None
-
     # Format results for frontend, converting Decimal to float
     adoption_data = [
         {
             "name": row[0],
-            "team": float(round(row[1] or 0, 1)),
-            "industry": float(round(row[2] or 0, 1))
+            "team": float(round(row[1] or 0, 1))
         }
         for row in results
     ]
@@ -704,13 +500,9 @@ def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
 
-    if not result or result[0] is None:
-        logger.info("No data found for the specified filters")
-        return None
-
     response_data = {
         "accuracyData": {
-            "totalAccuracy": round(result[0] or 0, 1)
+            "totalAccuracy": round(result[0] if result and result[0] is not None else 0, 1)
         }
     }
     logger.info(f"Response data: {response_data}")
@@ -756,16 +548,12 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
 
-    if not result or all(x is None for x in result):
-        logger.info("No data found for the specified filters")
-        return None
-
     response_data = {
         "fluencyData": {
-            "wpm": round(result[0] or 0, 1),
-            "total": round(result[1] or 0, 1),
-            "pauses": round(result[2] or 0, 1),
-            "fillerWords": round(result[3] or 0, 1)
+            "wpm": round(result[0] if result and result[0] is not None else 0, 1),
+            "total": round(result[1] if result and result[1] is not None else 0, 1),
+            "pauses": round(result[2] if result and result[2] is not None else 0, 1),
+            "fillerWords": round(result[3] if result and result[3] is not None else 0, 1)
         }
     }
     logger.info(f"Response data: {response_data}")
@@ -807,13 +595,9 @@ def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
 
-    if not result or result[0] == 0:
-        logger.info("No data found for the specified filters")
-        return None
-
     response_data = {
         "simulationCount": {
-            "total": result[0]
+            "total": result[0] if result and result[0] is not None else 0
         }
     }
     logger.info(f"Response data: {response_data}")
