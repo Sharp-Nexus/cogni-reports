@@ -24,11 +24,4 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_LAMBDA_ARN: ${{ env.AWS_LAMBDA_ARN }}
-        run: |
-          nix develop --command bash -c "
-            echo Function ARN: $AWS_LAMBDA_ARN
-            aws lambda update-function-code \
-              --function-name $AWS_LAMBDA_ARN \
-              --region $AWS_REGION \
-              --zip-file fileb://result/dist/lambda.zip
-            "
+        run: ./deploy-ci.sh
