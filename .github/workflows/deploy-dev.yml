@@ -9,6 +9,7 @@ jobs:
   build:
     name: Build Nix package
     runs-on: ubuntu-latest
+    environment: dev
     permissions:
       id-token: write
       contents: read
