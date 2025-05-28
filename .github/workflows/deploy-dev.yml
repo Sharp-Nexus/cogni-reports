@@ -24,4 +24,6 @@ jobs:
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           AWS_LAMBDA_ARN: ${{ env.AWS_LAMBDA_ARN }}
-        run: ./deploy-ci.sh
+        run: |
+          echo AWS_LAMBDA_ARN "${{ env.AWS_LAMBDA_ARN }}"
+          ./deploy-ci.sh
