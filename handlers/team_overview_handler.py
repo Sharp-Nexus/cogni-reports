@@ -6,11 +6,11 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team averages from call_sim_scoring table with optional filters
     """
-    logger.info(f"Calculating team averages with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team averages with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Get available products for this team
     products_query = """
@@ -27,6 +27,10 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
     if mode and mode != 'all':
         products_query += " AND mode = %s"
         params.append(mode)
+    
+    if assessment_status and assessment_status != 'all':
+        products_query += " AND assessment_status = %s"
+        params.append(assessment_status)
     
     products_query += " AND product_id IS NOT NULL"
     
@@ -81,6 +85,10 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
         query += " AND mode = %s"
         params.append(mode)
 
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
+
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
 
@@ -91,7 +99,14 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
 
     if not result or result[1] == 0:  # Check if no data or zero simulations
         logger.info("No data found for the specified filters")
-        return None
+        return {
+            "teamAverages": {
+                "overall": None,
+                "simulations": None,
+                "availableProducts": available_products,
+                "totalAccuracy": None
+            }
+        }
 
     response_data = {
         "teamAverages": {
@@ -104,11 +119,11 @@ def calculate_team_averages(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team comparison data from call_sim_scoring table with optional filters
     """
-    logger.info(f"Calculating team comparison with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team comparison with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
@@ -123,7 +138,8 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
                 CAST(accuracy->'scores'->'closing'->>'score' AS FLOAT) as closing_score,
                 CAST(accuracy->'scores'->'disc'->>'score' AS FLOAT) as disc_score,
                 CAST(accuracy->'scores'->'traits'->>'score' AS FLOAT) as traits_score,
-                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score
+                CAST(accuracy->'scores'->'adoptionContinuum'->>'score' AS FLOAT) as adoption_score,
+                COUNT(*) OVER() as total_count
             FROM call_sim_scoring
             WHERE accuracy IS NOT NULL
     """
@@ -141,76 +157,100 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
         query += " AND product_id = %s"
         params.append(product_id)
     
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
+    
     query += """
         )
         SELECT 
             'Introduction' as name,
-            AVG(intro_score) as team
+            AVG(intro_score) as team,
+            total_count
         FROM team_scores
         WHERE intro_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Rapport' as name,
-            AVG(rapport_score) as team
+            AVG(rapport_score) as team,
+            total_count
         FROM team_scores
         WHERE rapport_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Creating Interest' as name,
-            AVG(interest_score) as team
+            AVG(interest_score) as team,
+            total_count
         FROM team_scores
         WHERE interest_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Probing' as name,
-            AVG(probing_score) as team
+            AVG(probing_score) as team,
+            total_count
         FROM team_scores
         WHERE probing_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Product Knowledge' as name,
-            AVG(product_score) as team
+            AVG(product_score) as team,
+            total_count
         FROM team_scores
         WHERE product_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Strategy' as name,
-            AVG(strategy_score) as team
+            AVG(strategy_score) as team,
+            total_count
         FROM team_scores
         WHERE strategy_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Closing' as name,
-            AVG(closing_score) as team
+            AVG(closing_score) as team,
+            total_count
         FROM team_scores
         WHERE closing_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'DISC' as name,
-            AVG(disc_score) as team
+            AVG(disc_score) as team,
+            total_count
         FROM team_scores
         WHERE disc_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Traits' as name,
-            AVG(traits_score) as team
+            AVG(traits_score) as team,
+            total_count
         FROM team_scores
         WHERE traits_score IS NOT NULL
+        GROUP BY total_count
 
         UNION ALL
         SELECT 
             'Adoption Continuum' as name,
-            AVG(adoption_score) as team
+            AVG(adoption_score) as team,
+            total_count
         FROM team_scores
         WHERE adoption_score IS NOT NULL
+        GROUP BY total_count
     """
 
     logger.info(f"Executing query: {query}")
@@ -220,6 +260,12 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
     cursor.execute(query, params)
     results = cursor.fetchall()
     logger.info(f"Query results: {results}")
+
+    if not results or results[0][2] == 0:  # Check if no data or zero count
+        logger.info("No data found for the specified filters")
+        return {
+            "teamComparisonData": None
+        }
 
     # Format results for frontend, converting Decimal to float
     comparison_data = [
@@ -236,11 +282,11 @@ def calculate_team_comparison(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team performance metrics grouped by situation type
     """
-    logger.info(f"Calculating team situation with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team situation with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
@@ -274,6 +320,10 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
         params.append(product_id)
+    
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
     
     query += """
         )
@@ -309,11 +359,11 @@ def calculate_team_situation(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team performance trends over time
     """
-    logger.info(f"Calculating team trend with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team trend with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
@@ -347,6 +397,10 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
         params.append(product_id)
+    
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
     
     query += """
         )
@@ -382,11 +436,11 @@ def calculate_team_trend(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team performance metrics grouped by adoption level
     """
-    logger.info(f"Calculating team adoption with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team adoption with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query to get team performance metrics with dynamic benchmarks
     query = """
@@ -420,6 +474,10 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     if product_id and product_id != 'all':
         query += " AND product_id = %s"
         params.append(product_id)
+    
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
     
     query += """
         )
@@ -463,16 +521,17 @@ def calculate_team_adoption(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team accuracy metrics from call_sim_scoring table
     """
-    logger.info(f"Calculating team accuracy with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team accuracy with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query
     query = """
         SELECT 
-            AVG(CAST(accuracy->'scores'->'total'->>'score' AS FLOAT)) as total_accuracy
+            AVG(CAST(accuracy->'scores'->'total'->>'score' AS FLOAT)) as total_accuracy,
+            COUNT(*) as total_count
         FROM call_sim_scoring
         WHERE 1=1
     """
@@ -492,6 +551,10 @@ def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
     if mode and mode != 'all':
         query += " AND mode = %s"
         params.append(mode)
+        
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
 
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -499,6 +562,14 @@ def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
     cursor.execute(query, params)
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
+
+    if not result or result[1] == 0:  # Check if no data or zero count
+        logger.info("No data found for the specified filters")
+        return {
+            "accuracyData": {
+                "totalAccuracy": None
+            }
+        }
 
     response_data = {
         "accuracyData": {
@@ -508,11 +579,11 @@ def calculate_team_accuracy(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate team fluency metrics from call_sim_scoring table
     """
-    logger.info(f"Calculating team fluency with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team fluency with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query
     query = """
@@ -520,7 +591,8 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
             AVG(CAST(fluency->'scores'->'wpm' AS FLOAT)) as wpm,
             AVG(CAST(fluency->'scores'->'total' AS FLOAT)) as total,
             AVG(CAST(fluency->'scores'->'pauses' AS FLOAT)) as pauses,
-            AVG(CAST(fluency->'scores'->'fillerWords' AS FLOAT)) as filler_words
+            AVG(CAST(fluency->'scores'->'fillerWords' AS FLOAT)) as filler_words,
+            COUNT(*) as total_count
         FROM call_sim_scoring
         WHERE fluency IS NOT NULL
     """
@@ -540,6 +612,10 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
     if mode and mode != 'all':
         query += " AND mode = %s"
         params.append(mode)
+        
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
 
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -547,6 +623,17 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
     cursor.execute(query, params)
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
+
+    if not result or result[4] == 0:  # Check if no data or zero count
+        logger.info("No data found for the specified filters")
+        return {
+            "fluencyData": {
+                "wpm": None,
+                "total": None,
+                "pauses": None,
+                "fillerWords": None
+            }
+        }
 
     response_data = {
         "fluencyData": {
@@ -559,11 +646,11 @@ def calculate_team_fluency(cursor, product_id=None, team_id=None, mode=None):
     logger.info(f"Response data: {response_data}")
     return response_data
 
-def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=None):
+def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=None, assessment_status=None):
     """
     Calculate total number of simulations for the team
     """
-    logger.info(f"Calculating team simulation count with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+    logger.info(f"Calculating team simulation count with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
     
     # Base query
     query = """
@@ -587,6 +674,10 @@ def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=
     if mode and mode != 'all':
         query += " AND mode = %s"
         params.append(mode)
+        
+    if assessment_status and assessment_status != 'all':
+        query += " AND assessment_status = %s"
+        params.append(assessment_status)
 
     logger.info(f"Executing query: {query}")
     logger.info(f"Query parameters: {params}")
@@ -594,6 +685,14 @@ def calculate_team_simulation_count(cursor, product_id=None, team_id=None, mode=
     cursor.execute(query, params)
     result = cursor.fetchone()
     logger.info(f"Query result: {result}")
+
+    if not result or result[0] == 0:  # Check if no data or zero count
+        logger.info("No data found for the specified filters")
+        return {
+            "simulationCount": {
+                "total": None
+            }
+        }
 
     response_data = {
         "simulationCount": {
@@ -637,12 +736,13 @@ def handle_team_overview_request(event, context):
         product_id = query_params.get('product')
         team_id = query_params.get('team')
         mode = query_params.get('mode')
+        assessment_status = query_params.get('assessmentStatus')
         
-        logger.info(f"Processing request with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}")
+        logger.info(f"Processing request with filters - product_id: {product_id}, team_id: {team_id}, mode: {mode}, assessment_status: {assessment_status}")
 
         # Handle different endpoints
         if path == 'team-overview/averages':
-            averages_data = calculate_team_averages(cursor, product_id, team_id, mode)
+            averages_data = calculate_team_averages(cursor, product_id, team_id, mode, assessment_status)
             if not averages_data:
                 logger.info("No averages data found")
                 return {
@@ -666,7 +766,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(averages_data)
             }
         elif path == 'team-overview/accuracy':
-            accuracy_data = calculate_team_accuracy(cursor, product_id, team_id, mode)
+            accuracy_data = calculate_team_accuracy(cursor, product_id, team_id, mode, assessment_status)
             if not accuracy_data:
                 logger.info("No accuracy data found")
                 return {
@@ -690,7 +790,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(accuracy_data)
             }
         elif path == 'team-overview/fluency':
-            fluency_data = calculate_team_fluency(cursor, product_id, team_id, mode)
+            fluency_data = calculate_team_fluency(cursor, product_id, team_id, mode, assessment_status)
             if not fluency_data:
                 logger.info("No fluency data found")
                 return {
@@ -714,7 +814,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(fluency_data)
             }
         elif path == 'team-overview/simulation-count':
-            count_data = calculate_team_simulation_count(cursor, product_id, team_id, mode)
+            count_data = calculate_team_simulation_count(cursor, product_id, team_id, mode, assessment_status)
             if not count_data:
                 logger.info("No simulation count data found")
                 return {
@@ -738,7 +838,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(count_data)
             }
         elif path == 'team-overview/comparison':
-            comparison_data = calculate_team_comparison(cursor, product_id, team_id, mode)
+            comparison_data = calculate_team_comparison(cursor, product_id, team_id, mode, assessment_status)
             if not comparison_data:
                 logger.info("No comparison data found")
                 return {
@@ -762,7 +862,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(comparison_data)
             }
         elif path == 'team-overview/situation':
-            situation_data = calculate_team_situation(cursor, product_id, team_id, mode)
+            situation_data = calculate_team_situation(cursor, product_id, team_id, mode, assessment_status)
             if not situation_data:
                 logger.info("No situation data found")
                 return {
@@ -786,7 +886,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(situation_data)
             }
         elif path == 'team-overview/trend':
-            trend_data = calculate_team_trend(cursor, product_id, team_id, mode)
+            trend_data = calculate_team_trend(cursor, product_id, team_id, mode, assessment_status)
             if not trend_data:
                 logger.info("No trend data found")
                 return {
@@ -810,7 +910,7 @@ def handle_team_overview_request(event, context):
                 "body": json.dumps(trend_data)
             }
         elif path == 'team-overview/adoption':
-            adoption_data = calculate_team_adoption(cursor, product_id, team_id, mode)
+            adoption_data = calculate_team_adoption(cursor, product_id, team_id, mode, assessment_status)
             if not adoption_data:
                 logger.info("No adoption data found")
                 return {

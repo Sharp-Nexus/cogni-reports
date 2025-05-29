@@ -148,6 +148,7 @@ def handle_simulation_run(event, context):
             product_filter = query_params.get('product')
             specialty_filter = query_params.get('specialty')
             mode_filter = query_params.get('mode')
+            assessment_status = query_params.get('assessmentStatus')
             
             if user_id:
                 conditions.append("user_id = %s")
@@ -164,6 +165,10 @@ def handle_simulation_run(event, context):
             if mode_filter and mode_filter != 'all':
                 conditions.append("mode = %s")
                 params.append(mode_filter)
+                
+            if assessment_status and assessment_status != 'all':
+                conditions.append("assessment_status = %s")
+                params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:

@@ -138,6 +138,7 @@ def handle_simulation_overview(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -177,6 +178,10 @@ def handle_simulation_overview(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
@@ -231,6 +236,7 @@ def handle_simulation_adoption(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -270,6 +276,10 @@ def handle_simulation_adoption(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
@@ -347,6 +357,7 @@ def handle_simulation_adoption(event, context):
 def handle_simulation_specialties(event, context):
     query_params = event.get('queryStringParameters', {}) or {}
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -373,6 +384,10 @@ def handle_simulation_specialties(event, context):
         if user_id:
             conditions.append("user_id = %s")
             params.append(user_id)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         if conditions:
             query += " WHERE " + " AND ".join(conditions)
@@ -423,6 +438,7 @@ def handle_simulation_metrics(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -462,6 +478,10 @@ def handle_simulation_metrics(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
@@ -541,6 +561,7 @@ def handle_simulation_traits(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -580,6 +601,10 @@ def handle_simulation_traits(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
@@ -663,6 +688,7 @@ def handle_simulation_disc(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -702,6 +728,10 @@ def handle_simulation_disc(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
@@ -786,6 +816,7 @@ def handle_simulation_fluency(event, context):
     specialty_filter = query_params.get('specialty')
     mode_filter = query_params.get('mode')
     user_id = query_params.get('userId')
+    assessment_status = query_params.get('assessmentStatus')
     
     try:
         connection = get_db_connection()
@@ -825,6 +856,10 @@ def handle_simulation_fluency(event, context):
         if mode_filter and mode_filter != 'all':
             conditions.append("mode = %s")
             params.append(mode_filter)
+            
+        if assessment_status and assessment_status != 'all':
+            conditions.append("assessment_status = %s")
+            params.append(assessment_status)
             
         # Combine all conditions with AND
         if conditions:
