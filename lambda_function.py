@@ -47,10 +47,9 @@ def lambda_handler(event, context):
     modified_event['path'] = path
 
     for route_prefix, handler in ROUTE_HANDLERS.items():
-        logger.info(f"[lambda_handler] +++++++ path: {path}")
-        logger.info(f"[lambda_handler] +++++++ http_method: {http_method}")
-        logger.info(f"[lambda_handler] +++++++ route_prefix: {route_prefix}")
-        if path.startswith(f'{http_method}:{route_prefix}'):
+        methodAndPath = f'{http_method}:{path}'
+        logger.info(f"[lambda_handler] +++++++ path: {path} http_method: {http_method} route_prefix: {route_prefix} methodAndPath: {methodAndPath}")
+        if methodAndPath.startswith(route_prefix):
             return handler(modified_event, context)
 
     logger.info(f"No route found for path: {path}, method: {http_method}")
