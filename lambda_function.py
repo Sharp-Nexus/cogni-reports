@@ -9,6 +9,7 @@ from handlers.simulation_insights_handler import handle_simulation_insights
 from handlers.team_members_handler import handle_team_members_request
 from handlers.team_overview_handler import handle_team_overview_request
 from handlers.sample_data_handler import handle_sample_data_request
+from handlers.assessment_status_handler import handle_assessment_status
 from utils.logger import logger
 
 ROUTE_HANDLERS = {
@@ -33,6 +34,10 @@ def lambda_handler(event, context):
     path = path.lstrip('/')
     if path.startswith('callsim/'):
         path = path[8:]
+        # Path format for handle_assessment_status: "callsim/<assessment-id>/status"
+        path_parts = path.split('/')
+        if len(path_parts) == 2 and path_parts[1] == 'status':
+            return handle_assessment_status(event, context)
 
     modified_event = event.copy()
     modified_event['path'] = path
