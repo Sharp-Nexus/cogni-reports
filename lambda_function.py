@@ -47,6 +47,9 @@ def lambda_handler(event, context):
     modified_event['path'] = path
 
     for route_prefix, handler in ROUTE_HANDLERS.items():
+        logger.info(f"[lambda_handler] +++++++ path: {path}")
+        logger.info(f"[lambda_handler] +++++++ http_method: {http_method}")
+        logger.info(f"[lambda_handler] +++++++ route_prefix: {route_prefix}")
         if path.startswith(f'{http_method}:{route_prefix}'):
             return handler(modified_event, context)
 
