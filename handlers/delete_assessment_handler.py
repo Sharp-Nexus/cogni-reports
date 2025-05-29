@@ -6,16 +6,17 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def handle_assessment_status(event, context):
-    # Get simulation ID from path
+def handle_delete_assessment(event, context):
+    # Get assessment ID from path
     path = event.get('path', '')
     path = path.lstrip('/')
     path_parts = path.split('/')
-    simulation_id = path_parts[1] if path_parts else None
-    logger.info(f"[handle_assessment_status] Simulation ID: {simulation_id}")
+    assessment_id = path_parts[2] if len(path_parts) > 2 else None
+    logger.info(f"[handle_delete_assessment] Assessment ID: {assessment_id}")
 
-    # Validate that simulation_id is not empty
-    if not simulation_id:
+    # Validate that assessment_id is not empty
+    if not assessment_id:
+        logger.error(f"[handle_delete_assessment] Assessment ID is empty")
         return {
             "statusCode": 400,
             "headers": {
@@ -24,13 +25,14 @@ def handle_assessment_status(event, context):
                 "Access-Control-Allow-Methods": "*"
             },
             "body": json.dumps({
-                "error": "Invalid simulation ID format"
+                "error": "Invalid assessment ID format"
             })
         }
 
     try:
         connection = get_db_connection()
         if not connection:
+            logger.error(f"[handle_delete_assessment] Failed to connect to database")
             return {
                 "statusCode": 500,
                 "headers": {
@@ -45,14 +47,12 @@ def handle_assessment_status(event, context):
 
         cursor = connection.cursor()
         
-        # Query using simulation_id instead of id
-        query = "SELECT id, simulation_id, assessment_status FROM call_sim_scoring WHERE simulation_id = %s"
-        cursor.execute(query, [simulation_id])
+        # First check if the record exists
+        check_query = "SELECT id FROM call_sim_scoring WHERE id = %s"
+        cursor.execute(check_query, [assessment_id])
         
-        # Fetch the result
-        result = cursor.fetchone()
-        
-        if not result:
+        if not cursor.fetchone():
+            logger.error(f"[handle_delete_assessment] Assessment not found")
             return {
                 "statusCode": 404,
                 "headers": {
@@ -65,7 +65,12 @@ def handle_assessment_status(event, context):
                 })
             }
 
-        # Return the status data
+        # Delete the record
+        delete_query = "UPDATE call_sim_scoring SET is_deleted = true WHERE id = %s"
+        cursor.execute(delete_query, [assessment_id])
+        connection.commit()
+
+        # Return success response
         return {
             "statusCode": 200,
             "headers": {
@@ -74,14 +79,13 @@ def handle_assessment_status(event, context):
                 "Access-Control-Allow-Methods": "*"
             },
             "body": json.dumps({
-                "id": result[0],
-                "simulation_id": result[1],
-                "status": result[2]
+                "message": "Assessment deleted successfully",
+                "id": assessment_id
             })
         }
         
     except Exception as e:
-        logger.error(f"[handle_assessment_status] Database error: {e}")
+        logger.error(f"[handle_delete_assessment] Database error: {e}")
         return {
             "statusCode": 500,
             "headers": {
