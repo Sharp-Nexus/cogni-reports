@@ -63,19 +63,19 @@ def transform_metrics_data(row):
     accuracy = row.get('accuracy', {})
     scores = accuracy.get('scores', {})
     
-    # Extract all metric scores
+    # Extract all metric scores with null checks
     metrics = {
-        'disc': scores.get('disc', {}).get('score', 0),
-        'total': scores.get('total', {}).get('score', 0),
-        'traits': scores.get('traits', {}).get('score', 0),
-        'closing': scores.get('closing', {}).get('score', 0),
-        'probing': scores.get('probing', {}).get('score', 0),
-        'rapport': scores.get('rapport', {}).get('score', 0),
-        'strategy': scores.get('strategy', {}).get('score', 0),
-        'introduction': scores.get('introduction', {}).get('score', 0),
-        'creatingInterest': scores.get('creatingInterest', {}).get('score', 0),
-        'productKnowledge': scores.get('productKnowledge', {}).get('score', 0),
-        'adoptionContinuum': scores.get('adoptionContinuum', {}).get('score', 0)
+        'disc': scores.get('disc', {}).get('score', 0) or 0,
+        'total': scores.get('total', {}).get('score', 0) or 0,
+        'traits': scores.get('traits', {}).get('score', 0) or 0,
+        'closing': scores.get('closing', {}).get('score', 0) or 0,
+        'probing': scores.get('probing', {}).get('score', 0) or 0,
+        'rapport': scores.get('rapport', {}).get('score', 0) or 0,
+        'strategy': scores.get('strategy', {}).get('score', 0) or 0,
+        'introduction': scores.get('introduction', {}).get('score', 0) or 0,
+        'creatingInterest': scores.get('creatingInterest', {}).get('score', 0) or 0,
+        'productKnowledge': scores.get('productKnowledge', {}).get('score', 0) or 0,
+        'adoptionContinuum': scores.get('adoptionContinuum', {}).get('score', 0) or 0
     }
     
     return metrics
@@ -507,7 +507,8 @@ def handle_simulation_metrics(event, context):
                 for metric, score in result.items():
                     if metric not in metric_totals:
                         metric_totals[metric] = 0
-                    metric_totals[metric] += score
+                    # Ensure score is a number before adding
+                    metric_totals[metric] += float(score) if score is not None else 0
             
             # Calculate final averages
             metrics_data = [
