@@ -11,7 +11,7 @@ def handle_assessment_status(event, context):
     path = event.get('path', '')
     path = path.lstrip('/')
     path_parts = path.split('/')
-    simulation_id = path_parts[0] if path_parts else None
+    simulation_id = path_parts[1] if path_parts else None
     logger.info(f"[handle_assessment_status] Simulation ID: {simulation_id}")
 
     # Validate that simulation_id is not empty
