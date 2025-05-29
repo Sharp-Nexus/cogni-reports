@@ -2,7 +2,9 @@ import json
 from .db_connection import get_db_connection
 import logging
 
-logger = logging.getLogger()
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 def handle_assessment_status(event, context):
     # Get simulation ID from path
