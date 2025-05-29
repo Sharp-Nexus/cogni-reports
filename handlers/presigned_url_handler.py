@@ -30,7 +30,7 @@ def handle_presigned_url_request(event, context):
                     'agent': event['queryStringParameters']['agent'],
                     'disc': event['queryStringParameters']['disc'],
                     'mode': event['queryStringParameters']['mode'],
-                    'recordVideo': event['queryStringParameters']['recordVideo']
+                    'recordVideo': str(event['queryStringParameters']['recordVideo'])
                 }
             },
             ExpiresIn=expiration
