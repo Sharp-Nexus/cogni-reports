@@ -47,11 +47,12 @@ def handle_delete_assessment(event, context):
 
         cursor = connection.cursor()
         
-        # First check if the record exists
-        check_query = "SELECT id FROM call_sim_scoring WHERE id = %s"
+        # First check if the record exists and its mode
+        check_query = "SELECT id, mode FROM call_sim_scoring WHERE id = %s"
         cursor.execute(check_query, [assessment_id])
         
-        if not cursor.fetchone():
+        result = cursor.fetchone()
+        if not result:
             logger.error(f"[handle_delete_assessment] Assessment not found")
             return {
                 "statusCode": 404,
@@ -62,6 +63,21 @@ def handle_delete_assessment(event, context):
                 },
                 "body": json.dumps({
                     "error": "Assessment not found"
+                })
+            }
+
+        # Prevent deletion of TESTING mode records
+        if result[1] == 'TESTING':
+            logger.error(f"[handle_delete_assessment] Cannot delete assessment with TESTING mode")
+            return {
+                "statusCode": 403,
+                "headers": {
+                    "Access-Control-Allow-Origin": "*",
+                    "Access-Control-Allow-Headers": "*",
+                    "Access-Control-Allow-Methods": "*"
+                },
+                "body": json.dumps({
+                    "error": "Cannot delete assessment with TESTING mode"
                 })
             }
 
