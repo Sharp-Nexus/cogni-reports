@@ -1,5 +1,4 @@
 import json
-from datetime import datetime
 from .db_connection import get_db_connection
 
 def calculate_skill_data(cursor, product_id=None, team_id=None):
