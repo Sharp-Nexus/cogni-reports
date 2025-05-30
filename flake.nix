@@ -20,9 +20,7 @@
       pythonPackages = python.pkgs;
 
       developmentPackages = with pythonPackages; [
-        pip
         ruff
-        virtualenv
       ];
 
       packages = with pythonPackages; [
@@ -33,6 +31,15 @@
       pythonEnv = python.withPackages (ps: developmentPackages ++ packages);
       pythonLambdaEnv = python.withPackages (ps: packages);
     };
+
+    checks = forEachSupportedSystem ({pkgs}: {
+      lint = pkgs.runCommand "lint" {} ''
+        export RUFF_CACHE_DIR=$(mktemp -d)
+        cd ${self}
+        ${pkgs.pythonEnv}/bin/ruff check .
+        touch $out
+      '';
+    });
 
     packages = forEachSupportedSystem({pkgs}: {
       default = pkgs.stdenvNoCC.mkDerivation {
