@@ -48,6 +48,7 @@ def transform_simulation_run_data(row):
     
     return {
         "id": row.get('id'),
+        "mode": row.get('mode'),
         "userId": row.get('user_id'),
         "date": formatted_date,
         "adoptionLevel": row.get('adoption_continuum', 'naive').capitalize(),
