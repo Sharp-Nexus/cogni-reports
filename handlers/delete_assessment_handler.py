@@ -16,7 +16,7 @@ def handle_delete_assessment(event, context):
 
     # Validate that assessment_id is not empty
     if not assessment_id:
-        logger.error(f"[handle_delete_assessment] Assessment ID is empty")
+        logger.error("[handle_delete_assessment] Assessment ID is empty")
         return {
             "statusCode": 400,
             "headers": {
@@ -32,7 +32,7 @@ def handle_delete_assessment(event, context):
     try:
         connection = get_db_connection()
         if not connection:
-            logger.error(f"[handle_delete_assessment] Failed to connect to database")
+            logger.error("[handle_delete_assessment] Failed to connect to database")
             return {
                 "statusCode": 500,
                 "headers": {
@@ -53,7 +53,7 @@ def handle_delete_assessment(event, context):
         
         result = cursor.fetchone()
         if not result:
-            logger.error(f"[handle_delete_assessment] Assessment not found")
+            logger.error("[handle_delete_assessment] Assessment not found")
             return {
                 "statusCode": 404,
                 "headers": {
@@ -68,7 +68,7 @@ def handle_delete_assessment(event, context):
 
         # Prevent deletion of TESTING mode records
         if result[1] == 'TESTING':
-            logger.error(f"[handle_delete_assessment] Cannot delete assessment with TESTING mode")
+            logger.error("[handle_delete_assessment] Cannot delete assessment with TESTING mode")
             return {
                 "statusCode": 403,
                 "headers": {

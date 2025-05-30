@@ -1,7 +1,8 @@
-name: Build Cogni Reports Lamnda
+name: Build Cogni Reports Lambda
 
 on:
   pull_request:
+    branches: [ dev ]
   push:
     branches: [ dev ]
 
@@ -15,8 +16,13 @@ jobs:
       contents: read
     steps:
       - uses: actions/checkout@v4.2.2
-      - uses: DeterminateSystems/determinate-nix-action@v3.6.1
-      - name: Build Lambda package
+      - name: Check Nix flake inputs
+        uses: DeterminateSystems/flake-checker-action@main
+      - name: Install Nix
+        uses: DeterminateSystems/determinate-nix-action@v3.6.1
+      - name: Run linter
+        run: nix flake check
+      - name: Build Nix Lambda package
         run: nix build .
       - name: Deploy to Lambda
         env:
